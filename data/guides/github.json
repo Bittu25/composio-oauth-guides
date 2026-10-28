@@ -8,7 +8,7 @@
     "managedApp": "available",
     "note": "Composio lists GitHub under 'Composio-managed OAuth available'. Use your own OAuth App for your own name on the authorization page, your own rate-limit budget per app, or so customer orgs approve your app rather than Composio's. Composio's GitHub guide uses an OAuth App (not a GitHub App). Copy the callback URL from the Composio auth-config screen."
   },
-  "summary": "The easiest of the three: register an OAuth App in GitHub settings in a few minutes with no review, no verification and no fees. The main production friction is organizations with OAuth app access restrictions (on by default for new orgs), where an owner must approve your app before it can see org resources.",
+  "summary": "Among the easiest: register an OAuth App in GitHub settings in a few minutes with no review, no verification and no fees. The main production friction is organizations with OAuth app access restrictions (on by default for new orgs), where an owner must approve your app before it can see org resources.",
   "difficulty": "easy",
   "difficultyReason": "Self-serve form with name, homepage URL and callback URL. No provider review. Org-level approval is the only gate and it is per customer org.",
   "time": {

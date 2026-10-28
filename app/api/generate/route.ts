@@ -26,7 +26,10 @@ export async function POST(req: Request) {
         let message = "Something went wrong while generating the guide.";
         if (err instanceof Anthropic.AuthenticationError) message = "The server's Anthropic API key is missing or invalid.";
         else if (err instanceof Anthropic.RateLimitError) message = "Rate limited by the model API. Try again in a minute.";
-        else if (err instanceof Anthropic.APIError) message = `Model API error ${err.status}: ${err.message}`;
+        else if (err instanceof Anthropic.APIError) {
+          const body = err.error as { error?: { message?: string } } | undefined;
+          message = `The model API returned an error (${err.status}): ${body?.error?.message ?? err.message}`;
+        }
         send({ type: "error", message });
       } finally {
         controller.close();

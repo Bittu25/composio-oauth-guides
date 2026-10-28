@@ -26,14 +26,15 @@ export function Recent() {
   if (!items.length) return null;
   return (
     <section className="recent">
-      <h2>Guides you generated</h2>
-      <ul>
+      <h2>Your generated guides</h2>
+      <div className="recent-list">
         {items.map((i) => (
-          <li key={i.hash}>
-            <a href={`/g#${i.hash}`}>{i.app}</a> <span className="muted small">{i.at.slice(0, 10)}</span>
-          </li>
+          <a key={i.hash} href={`/g#${i.hash}`} className="recent-item">
+            <span>{i.app}</span>
+            <span className="muted small">{i.at.slice(0, 10)}</span>
+          </a>
         ))}
-      </ul>
+      </div>
     </section>
   );
 }
