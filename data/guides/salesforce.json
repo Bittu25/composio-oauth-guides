@@ -1,0 +1,306 @@
+{
+  "slug": "salesforce",
+  "app": "Salesforce",
+  "website": "https://www.salesforce.com",
+  "developerConsole": "Salesforce Setup in your org > External Client App Manager (or App Manager > New External Client App). Free Developer Edition org: https://developer.salesforce.com/signup",
+  "composio": {
+    "toolkit": "salesforce",
+    "managedApp": "available",
+    "note": "Composio lists Salesforce under Composio-managed OAuth. Salesforce Service Cloud (salesforce_service_cloud) is a separate toolkit that requires your own app. Composio's guide (composio.dev/auth/salesforce) covers both External Client Apps and Connected Apps, recommends scopes api, refresh_token, offline_access (plus full/openid), and asks for your My Domain subdomain and instance URL. Copy the redirect URI from the Composio dashboard."
+  },
+  "summary": "No review is needed to get OAuth credentials for your own org, but Salesforce has turned off new Connected App creation by default (Spring '26), so new integrations use External Client Apps (ECAs). A 'Local' ECA only serves users in the org it was created in. To let other customers' orgs connect, you generally need a Packaged ECA (2GP managed package, Dev Hub plus namespace org) that each customer admin installs. Expect a 2-30 minute propagation delay after saving before OAuth works.",
+  "difficulty": "hard",
+  "difficultyReason": "Single-org setup is easy. Multi-tenant use is hard: Connected App creation is gated behind Salesforce Support, and ECAs need packaging and a per-customer install to work across orgs. Customer admins also control access policies.",
+  "time": {
+    "activeWork": "30-60 min single org (inferred)",
+    "approvalWait": "None; 10-30 min propagation",
+    "toProduction": "Same day own org; days multi-org",
+    "notes": "A Local External Client App works in its own org once Salesforce propagates it (about 10 min per third-party guides, up to 30 reportedly per Salesforce's MCP guide). Customer orgs need a packaged ECA installed and configured by each admin, which takes days (inferred). AppExchange security review adds about 4-6 weeks (uncertain)."
+  },
+  "review": {
+    "level": "self_serve",
+    "details": "Creating an ECA and using it in your own org needs no Salesforce review. Distributing to other orgs is self-serve packaging (2GP managed package) plus a per-org install and policy setup by each customer's admin. An AppExchange listing is optional and requires the Salesforce partner program and an AppExchange Security Review (business plan, code/endpoint scans, fee for paid apps). I could not fetch the official review pages."
+  },
+  "limitsBeforeApproval": "There is no approval gate. A Local ECA authenticates only users of the org it lives in. Users from other orgs get 'Cross-org OAuth flows are not supported for this external client app' unless the app is installed in their org (reported by integration vendors). Users may also need admin pre-authorization, depending on the Permitted Users policy.",
+  "prerequisites": [
+    {
+      "item": "A Salesforce org where you can create External Client Apps (free Developer Edition works)",
+      "why": "ECAs are available in Professional, Performance, Unlimited and Developer editions. Your user needs the Create, Edit and Delete External Client Apps permission.",
+      "blocking": true
+    },
+    {
+      "item": "Composio redirect URI from the dashboard",
+      "why": "It must be entered as the ECA Callback URL, and redirect_uri must match it.",
+      "blocking": true
+    },
+    {
+      "item": "My Domain subdomain and instance URL of each connecting org",
+      "why": "Composio's Salesforce auth config asks for them (Setup > My Domain).",
+      "blocking": true
+    },
+    {
+      "item": "For multi-org: a Dev Hub org plus a separate namespace Developer Edition org and the Salesforce CLI",
+      "why": "A Packaged ECA ships in a 2GP managed package. Enabling Dev Hub is irreversible, and the same org can't be both Dev Hub and namespace org.",
+      "blocking": false
+    },
+    {
+      "item": "Salesforce Support ticket (only if you insist on a new Connected App)",
+      "why": "Since Spring '26, new Connected App creation is off by default in the UI and API, and re-enabling it requires Support.",
+      "blocking": false
+    }
+  ],
+  "steps": [
+    {
+      "title": "Decide: single org or customer orgs",
+      "detail": "If agents only touch your company's org, a Local ECA is enough. If your customers connect their own orgs, plan a Packaged ECA, or use the Composio-managed app.",
+      "owner": "agent",
+      "url": null
+    },
+    {
+      "title": "Get an org and permissions",
+      "detail": "Sign up for a free Developer Edition org, or use an org where you have the External Client App create/edit permission. Note the My Domain (Setup > My Domain).",
+      "owner": "developer",
+      "url": "https://developer.salesforce.com/signup"
+    },
+    {
+      "title": "Copy the Composio redirect URI",
+      "detail": "In Composio, go to Create Auth Config > Salesforce > OAuth2 > use your own developer credentials, and copy the redirect URI it shows.",
+      "owner": "developer",
+      "url": "https://platform.composio.dev"
+    },
+    {
+      "title": "Create the External Client App",
+      "detail": "Setup > External Client App Manager (or App Manager > New External Client App). Set name, contact email and distribution state (Local or Packaged). Enable OAuth, paste the Callback URL, and add scopes: api, refresh_token/offline_access (add others only if your actions need them). Keep 'Require secret for Web Server Flow' and 'Require secret for Refresh Token Flow' on. Composio's guide leaves PKCE off.",
+      "owner": "developer",
+      "url": "https://composio.dev/auth/salesforce"
+    },
+    {
+      "title": "Set OAuth policies",
+      "detail": "Policies tab: set Permitted Users ('All users may self-authorize', or 'Admin approved users are pre-authorized' plus profiles/permission sets), Refresh Token Policy (e.g. valid until revoked), and IP relaxation to suit your network.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "title": "Wait for propagation, then copy credentials",
+      "detail": "Wait about 10 minutes (up to 30). Settings > OAuth Settings > Consumer Key and Secret (may require email verification). Paste them into Composio with the subdomain and instance URL, then save the ac_... ID.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "title": "Verify config and test-connect",
+      "detail": "Check that the callback URL in Salesforce matches the Composio URI exactly, and that the scopes include refresh_token/offline_access. Run a test connection and call a simple REST query. If it fails within the first 10-30 min, wait and retry before changing settings.",
+      "owner": "agent",
+      "url": null
+    },
+    {
+      "title": "Package the ECA for customer orgs (multi-org only)",
+      "detail": "Enable Dev Hub, register a namespace in a second Developer Edition org, retrieve the ECA metadata with the Salesforce CLI, and build and release a 2GP managed package. Keep the global OAuth settings in a long-lived org rather than in the package.",
+      "owner": "developer",
+      "url": "https://trailhead.salesforce.com/content/learn/modules/external-client-app-basics/package-and-distribute-external-client-apps"
+    },
+    {
+      "title": "Write the customer-admin install guide",
+      "detail": "A one-page guide for customer admins: install the package link, set Permitted Users and assign profiles/permission sets, set the refresh token policy, then connect via Composio.",
+      "owner": "agent",
+      "url": null
+    },
+    {
+      "title": "Customer admin installs and authorizes",
+      "detail": "Each customer's Salesforce admin installs the package and sets access policies before their users can complete OAuth.",
+      "owner": "provider",
+      "url": null
+    }
+  ],
+  "nuances": [
+    {
+      "title": "New Connected Apps are disabled by default",
+      "detail": "Since Spring '26, creating Connected Apps is blocked in the UI and Metadata API (except via package install), and re-enabling needs Salesforce Support. Automated Connected App provisioning via API fails. Existing Connected Apps keep working.",
+      "severity": "warning"
+    },
+    {
+      "title": "Local ECAs don't work across orgs",
+      "detail": "Integration vendors report 'Cross-org OAuth flows are not supported for this external client app' when users from another org try a Local ECA. The fix is to install the app in each target org, ideally via a packaged ECA. Old global Connected Apps did not have this limit.",
+      "severity": "blocker"
+    },
+    {
+      "title": "Propagation delay after save",
+      "detail": "New or edited apps can fail OAuth for several minutes. Third-party guides cite about 10 minutes, and Salesforce's MCP guide reportedly says up to 30. Don't debug before waiting.",
+      "severity": "warning"
+    },
+    {
+      "title": "Customer admins control access",
+      "detail": "With 'Admin approved users are pre-authorized', only users whose profile or permission set is assigned can connect. Others get an OAuth error even with valid credentials.",
+      "severity": "warning"
+    },
+    {
+      "title": "ECAs only support modern OAuth flows",
+      "detail": "Legacy patterns such as the username-password flow are not available on ECAs. Use the web-server (authorization code) flow, which Composio uses.",
+      "severity": "info"
+    },
+    {
+      "title": "Refresh token lifetime is policy-controlled",
+      "detail": "If the refresh token policy expires tokens, agents lose access silently. Set 'valid until revoked' or a long expiry, as fits your security posture.",
+      "severity": "info"
+    }
+  ],
+  "blockers": [
+    {
+      "problem": "No 'New Connected App' option, or API creation fails",
+      "whatToDo": "Create an External Client App instead. Only file a Support case if you truly need a Connected App."
+    },
+    {
+      "problem": "Customer users get a cross-org OAuth error",
+      "whatToDo": "Ship the ECA as a 2GP managed package and have each customer admin install it, or use the Composio-managed Salesforce app."
+    },
+    {
+      "problem": "invalid_client_id / redirect_uri_mismatch right after setup",
+      "whatToDo": "Wait 10-30 minutes for propagation, then check that the callback URL exactly matches the Composio URI."
+    },
+    {
+      "problem": "User not approved to access the app",
+      "whatToDo": "Customer admin assigns the user's profile or permission set in the ECA policies, or switches Permitted Users to self-authorize."
+    }
+  ],
+  "agentCanDo": [
+    "Decide between a Local and a Packaged ECA based on whether customers connect their own orgs",
+    "Pick minimal OAuth scopes for the Composio Salesforce actions you need",
+    "Generate ECA metadata (sfdx project files) and run Salesforce CLI retrieve/package commands once the developer has authenticated",
+    "Check that the callback URL and scopes match Composio, and test-connect after the propagation wait",
+    "Write the customer-admin install and policy guide",
+    "Diagnose common OAuth errors (cross-org, propagation, user not approved) from error text"
+  ],
+  "developerMustDo": [
+    "Sign up for or sign in to a Salesforce org and do Setup work as an admin",
+    "Get the consumer secret (often needs email verification) and paste it into Composio",
+    "Enable Dev Hub (irreversible) and register a namespace if packaging",
+    "Open a Salesforce Support case if a Connected App is genuinely required",
+    "Coordinate with each customer's Salesforce admin to install and authorize the app",
+    "Join the partner program and pay for or complete the AppExchange Security Review, if listing"
+  ],
+  "redirectUri": "Set as the Callback URL in the ECA's OAuth settings (multiple can be listed). The redirect_uri in the authorization request must match a registered callback URL; Trailhead says it must match the app's callback URL. Use HTTPS. I did not confirm from a fetched official page whether http://localhost is accepted. Changes are subject to the same propagation delay. For Composio, paste the URI from the dashboard. composio.dev/auth/salesforce shows https://backend.composio.dev/api/v3/toolkits/auth/callback, while other Composio docs show a v3.1 path or the older .../api/v1/auth-apps/add.",
+  "sources": [
+    {
+      "title": "Salesforce blog: Spring '26 Release Architect Highlights",
+      "url": "https://www.salesforce.com/blog/spring-26-release-architect-highlights/"
+    },
+    {
+      "title": "Salesforce release note: Creation of New Connected Apps Is Disabled by Default (Spring '26)",
+      "url": "https://help.salesforce.com/s/articleView?language=en_US&id=release-notes.rn_security_identity_connected_app_creation_disabled.htm&release=260&type=5"
+    },
+    {
+      "title": "Salesforce Help: New Connected Apps Can No Longer Be Created in Spring '26",
+      "url": "https://help.salesforce.com/s/articleView?language=en_US&id=005228017&type=1"
+    },
+    {
+      "title": "Trailhead: Package and Distribute External Client Apps",
+      "url": "https://trailhead.salesforce.com/content/learn/modules/external-client-app-basics/package-and-distribute-external-client-apps"
+    },
+    {
+      "title": "Salesforce Developers: Create an External Client App (Hosted MCP Servers guide)",
+      "url": "https://developer.salesforce.com/docs/platform/hosted-mcp-servers/guide/create-external-client-app.html"
+    },
+    {
+      "title": "Nango: Salesforce OAuth app setup",
+      "url": "https://nango.dev/docs/api-integrations/salesforce/salesforce-api-oauth-app-setup"
+    },
+    {
+      "title": "Unified.to: Salesforce External Client Apps on multiple organizations",
+      "url": "https://unified.to/blog/salesforce_external_client_apps_on_multiple_organizations.md"
+    },
+    {
+      "title": "Composio: Salesforce auth guide",
+      "url": "https://composio.dev/auth/salesforce"
+    },
+    {
+      "title": "Composio: Managed auth toolkits",
+      "url": "https://docs.composio.dev/toolkits/managed-auth"
+    },
+    {
+      "title": "Salesforce ISVforce Guide: How the AppExchange Security Review Works",
+      "url": "https://developer.salesforce.com/docs/atlas.en-us.packagingGuide.meta/packagingGuide/security_review_how_it_works.htm"
+    }
+  ],
+  "claims": [
+    {
+      "claim": "Connected App creation is restricted by default in the UI and Metadata API (except via package installation). Re-enabling requires a request to Salesforce Support, and automated Connected App provisioning via API fails.",
+      "status": "source",
+      "sources": [
+        0
+      ]
+    },
+    {
+      "claim": "ECAs support only modern OAuth flows. Legacy patterns such as username-password are removed.",
+      "status": "source",
+      "sources": [
+        0
+      ]
+    },
+    {
+      "claim": "A Salesforce Support article (Oct 2026) says Support will not be able to enable new Connected App creation in future releases.",
+      "status": "uncertain",
+      "sources": [
+        2
+      ]
+    },
+    {
+      "claim": "Packaged ECAs are distributed in 2GP managed packages. OAuth consumer credentials are global settings that must not be packaged and live in a long-lived org.",
+      "status": "source",
+      "sources": [
+        3
+      ]
+    },
+    {
+      "claim": "A Local ECA cannot authenticate users from other orgs ('Cross-org OAuth flows are not supported for this external client app'). It must be installed in the target org.",
+      "status": "inferred",
+      "sources": [
+        6,
+        5
+      ]
+    },
+    {
+      "claim": "After creating or editing the app, OAuth may not work for about 10 minutes, and Salesforce's MCP guide reportedly says up to 30 minutes.",
+      "status": "inferred",
+      "sources": [
+        7,
+        4
+      ]
+    },
+    {
+      "claim": "ECAs are available in Professional, Performance, Unlimited and Developer editions, and need the Create/Edit/Delete External Client Apps permission.",
+      "status": "inferred",
+      "sources": [
+        5
+      ]
+    },
+    {
+      "claim": "AppExchange Security Review initial review takes about 4-6 weeks and charges a fee for paid/freemium solutions (waived for free ones).",
+      "status": "uncertain",
+      "sources": [
+        9
+      ]
+    },
+    {
+      "claim": "Composio offers a managed OAuth app for Salesforce. Salesforce Service Cloud requires your own app.",
+      "status": "source",
+      "sources": [
+        8
+      ]
+    },
+    {
+      "claim": "The authorization request's redirect_uri must match the app's registered callback URL.",
+      "status": "inferred",
+      "sources": [
+        7
+      ]
+    }
+  ],
+  "openQuestions": [
+    "developer.salesforce.com and help.salesforce.com blocked automated fetching (HTTP 403 / render error). ECA creation steps, propagation time and AppExchange review timings rest on search snippets and third-party guides, not pages I read.",
+    "Can a single Packaged ECA reuse one consumer key across all subscriber orgs, or does each install generate its own credentials? Trailhead says both are possible, and community threads report cross-org errors even after install.",
+    "How does the Composio-managed Salesforce app handle the cross-org restriction (legacy global Connected App?), and does it have any install or org limits?",
+    "Is http://localhost accepted as an ECA callback URL for local testing?",
+    "Which redirect URI is current for Composio: .../api/v3.1/toolkits/auth/callback, .../api/v3/toolkits/auth/callback (composio.dev/auth/salesforce), or the older .../api/v1/auth-apps/add? Copy it from the dashboard.",
+    "Does Composio's Salesforce connection flow support PKCE if a customer admin requires it?"
+  ],
+  "lastChecked": "2026-10-28"
+}

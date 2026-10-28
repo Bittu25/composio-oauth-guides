@@ -1,0 +1,291 @@
+{
+  "slug": "twitter",
+  "app": "X (Twitter)",
+  "website": "https://x.com",
+  "developerConsole": "https://console.x.com",
+  "composio": {
+    "toolkit": "twitter",
+    "managedApp": "not_available",
+    "note": "Composio lists Twitter under 'Bring your own OAuth app' (X_MCP is listed separately there too), so you must register your own X app and paste its OAuth 2.0 Client ID, Client Secret and Bearer token into a Composio auth config."
+  },
+  "summary": "Creating an X app is self-serve with no documented human review, but the API is now pay-per-use: you buy credits and every read or post is billed (e.g. $0.005 per post read, $0.015 per post created). The free tier is gone for new developers, so budget and a spend limit are the real gating items, not approval.",
+  "difficulty": "moderate",
+  "difficultyReason": "Console setup is quick, but you must buy credits, choose the right OAuth 2.0 app type, request offline.access for refresh tokens, and control per-request costs.",
+  "time": {
+    "activeWork": "20-40 min (inferred)",
+    "approvalWait": "None documented",
+    "toProduction": "Same day after buying credits",
+    "notes": "The official getting-access flow describes no manual review, so the wait is effectively zero (inferred). The gating step is buying credits and setting a spend limit; the active-work estimate is inferred, not stated by X."
+  },
+  "review": {
+    "level": "none",
+    "details": "Sign in at console.x.com, accept the Developer Agreement and Policy, give basic info on how you will use the API, then create an app (name, description, use case). The official getting-started page describes no manual approval. Access is paid: buy credits in the Developer Console; there are no subscriptions, contracts or minimum spend. Free scaled access is only for apps X classifies as 'Public Utility Apps'."
+  },
+  "limitsBeforeApproval": "No approval stage. Without credits, billed endpoints will not work. Pay-per-use is capped at 3 million post reads per monthly billing cycle; you can set a spend limit per cycle. Access tokens last 2 hours; refresh tokens only with offline.access.",
+  "prerequisites": [
+    {
+      "item": "X account to own the app",
+      "why": "You sign in to console.x.com with it; the app is tied to that account.",
+      "blocking": true
+    },
+    {
+      "item": "Payment method and purchased credits",
+      "why": "API usage is pay-per-use; requests deduct credits.",
+      "blocking": true
+    },
+    {
+      "item": "Use-case description",
+      "why": "Asked during profile completion and app creation.",
+      "blocking": false
+    },
+    {
+      "item": "Website URL (and terms/privacy URLs if asked)",
+      "why": "Shown in the authentication settings form; helps users trust the consent screen.",
+      "blocking": false
+    }
+  ],
+  "steps": [
+    {
+      "title": "Estimate monthly cost",
+      "detail": "List the Composio actions your agent will call and multiply by current per-resource prices (reads $0.001-$0.010, post create $0.015, post with URL $0.20). Decide a spend limit.",
+      "owner": "agent",
+      "url": "https://docs.x.com/x-api/getting-started/pricing"
+    },
+    {
+      "title": "Sign in to the Developer Console",
+      "detail": "Sign in at console.x.com, accept the Developer Agreement and Policy, and complete the profile.",
+      "owner": "developer",
+      "url": "https://console.x.com"
+    },
+    {
+      "title": "Write the use-case description",
+      "detail": "Short, specific description of what the agent reads and posts, and on whose behalf.",
+      "owner": "agent",
+      "url": null
+    },
+    {
+      "title": "Create the app",
+      "detail": "Create App with name, description and use case. Save the keys shown; they are displayed only once. Use separate apps for dev and production.",
+      "owner": "developer",
+      "url": "https://console.x.com"
+    },
+    {
+      "title": "Configure OAuth 2.0 authentication settings",
+      "detail": "In the app's authentication settings choose OAuth 2.0, type 'Web App' (confidential, gets a Client Secret), set permissions (Read / Read and write / Read, write and DMs), paste the Composio callback URL, and add a website URL.",
+      "owner": "developer",
+      "url": "https://docs.x.com/fundamentals/developer-apps"
+    },
+    {
+      "title": "Verify callback URL",
+      "detail": "Check the callback exactly matches the one shown in the Composio dashboard, including trailing slash. Max 10 callback URLs per app.",
+      "owner": "agent",
+      "url": "https://docs.x.com/fundamentals/developer-apps"
+    },
+    {
+      "title": "Buy credits and set a spend limit",
+      "detail": "Add a payment method in the Developer Console, buy credits, and set a per-cycle spend limit.",
+      "owner": "developer",
+      "url": "https://console.x.com"
+    },
+    {
+      "title": "Pick minimal scopes",
+      "detail": "Keep only what the actions need, e.g. tweet.read, users.read, tweet.write; always include offline.access so Composio gets a refresh token.",
+      "owner": "agent",
+      "url": "https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code"
+    },
+    {
+      "title": "Create the Composio auth config",
+      "detail": "In Composio, create a Twitter auth config, toggle 'use your own developer credentials', and enter Client ID, Client Secret and Bearer token. Save the ac_ config ID.",
+      "owner": "developer",
+      "url": "https://platform.composio.dev"
+    },
+    {
+      "title": "Test a connection",
+      "detail": "Connect an account, run a cheap read action, then check usage in the console to confirm billing matches the estimate.",
+      "owner": "agent",
+      "url": null
+    }
+  ],
+  "nuances": [
+    {
+      "title": "Free tier gone for new developers",
+      "detail": "Since the Feb 2026 switch to pay-per-use, only Public Utility Apps keep free scaled access; legacy Free users were moved to pay-per-use with a one-time voucher. Many 2023-2025 guides describing fixed monthly Free/Basic/Pro tiers are out of date.",
+      "severity": "warning"
+    },
+    {
+      "title": "Legacy Basic/Pro being migrated",
+      "detail": "X announced legacy Basic plans move to pay-per-use after 1 Jun 2026; third-party reports say Pro followed after 1 Sep 2026. Not verified on an official page that could be fetched.",
+      "severity": "info"
+    },
+    {
+      "title": "Posts with URLs cost more",
+      "detail": "Creating a post containing a URL is $0.20 vs $0.015 for a plain post, which matters for agents that share links.",
+      "severity": "warning"
+    },
+    {
+      "title": "Tokens expire in 2 hours",
+      "detail": "Without offline.access there is no refresh token and connections break after 2 hours. Authorization codes expire 30 seconds after approval.",
+      "severity": "warning"
+    },
+    {
+      "title": "Changing permissions forces re-auth",
+      "detail": "Changing app permissions requires existing users to re-authorize.",
+      "severity": "info"
+    },
+    {
+      "title": "No 'localhost' callbacks",
+      "detail": "Use https in production; for local dev use http://127.0.0.1, not localhost. javascript:, data:, file:, ftp:, mailto: are disallowed.",
+      "severity": "info"
+    }
+  ],
+  "blockers": [
+    {
+      "problem": "API calls fail with payment / credit errors",
+      "whatToDo": "Buy credits in the Developer Console and check the spend limit has not been reached."
+    },
+    {
+      "problem": "Callback URL not approved / redirect mismatch",
+      "whatToDo": "Copy the callback from the Composio dashboard and paste it exactly (trailing slash included) into the app's authentication settings."
+    },
+    {
+      "problem": "Connections drop after ~2 hours",
+      "whatToDo": "Add offline.access to the scopes in the Composio auth config and reconnect."
+    },
+    {
+      "problem": "Posting or DM actions return 403",
+      "whatToDo": "Raise app permissions to Read and write (or Read, write and DMs) and have users re-authorize."
+    }
+  ],
+  "agentCanDo": [
+    "Estimate monthly spend from current per-request prices",
+    "Write the use-case description and app description",
+    "Choose minimal scopes, including offline.access",
+    "Verify the callback URL matches Composio's exactly",
+    "Run test actions and reconcile usage against the console"
+  ],
+  "developerMustDo": [
+    "Sign in with the owning X account and accept the Developer Agreement",
+    "Create the app and configure OAuth 2.0 authentication settings",
+    "Add a payment method, buy credits, set a spend limit",
+    "Paste Client ID, Client Secret and Bearer token into Composio"
+  ],
+  "redirectUri": "Copy the callback URL from the Composio dashboard when creating the Twitter auth config. Composio's own docs disagree: the Twitter setup guide says https://backend.composio.dev/api/v1/auth-apps/add, other Composio pages use https://backend.composio.dev/api/v3/toolkits/auth/callback. X requires the redirect_uri to exactly match an allowlisted callback (including trailing slashes), allows up to 10 per app, expects https in production, and wants http://127.0.0.1 rather than localhost for local development.",
+  "sources": [
+    {
+      "title": "X API: Pricing",
+      "url": "https://docs.x.com/x-api/getting-started/pricing"
+    },
+    {
+      "title": "X: OAuth 2.0 Authorization Code Flow with PKCE",
+      "url": "https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code"
+    },
+    {
+      "title": "X: Developer apps",
+      "url": "https://docs.x.com/fundamentals/developer-apps"
+    },
+    {
+      "title": "X API: Getting access",
+      "url": "https://docs.x.com/x-api/getting-started/getting-access"
+    },
+    {
+      "title": "X Developers: Announcing the launch of X API Pay-Per-Use pricing",
+      "url": "https://devcommunity.x.com/t/announcing-the-launch-of-x-api-pay-per-use-pricing/256476"
+    },
+    {
+      "title": "X Developers: Legacy X API Basic plans are moving to Pay-Per-Use",
+      "url": "https://devcommunity.x.com/t/important-update-legacy-x-api-basic-plans-are-moving-to-pay-per-use-ppu/266305"
+    },
+    {
+      "title": "Composio: Managed auth toolkits",
+      "url": "https://docs.composio.dev/toolkits/managed-auth"
+    },
+    {
+      "title": "Composio: Twitter auth setup guide",
+      "url": "https://composio.dev/auth/twitter"
+    },
+    {
+      "title": "Composio: White-labeling authentication",
+      "url": "https://docs.composio.dev/docs/authentication/white-labeling-authentication"
+    }
+  ],
+  "claims": [
+    {
+      "claim": "X API pricing is pay-per-use with purchased credits, no subscriptions or minimum spend.",
+      "status": "source",
+      "sources": [
+        0
+      ]
+    },
+    {
+      "claim": "Post reads cost $0.005 per resource, post creation $0.015, post creation with URL $0.20; pay-per-use is capped at 3M post reads per billing cycle.",
+      "status": "source",
+      "sources": [
+        0
+      ]
+    },
+    {
+      "claim": "Getting access is self-serve: accept the Developer Agreement, describe usage, create an app; no manual approval is described.",
+      "status": "source",
+      "sources": [
+        3
+      ]
+    },
+    {
+      "claim": "OAuth 2.0 access tokens last 2 hours; refresh tokens require offline.access; auth codes expire after 30 seconds.",
+      "status": "source",
+      "sources": [
+        1
+      ]
+    },
+    {
+      "claim": "Callback URLs must match exactly including trailing slashes, max 10 per app, https in production, 127.0.0.1 instead of localhost.",
+      "status": "source",
+      "sources": [
+        2
+      ]
+    },
+    {
+      "claim": "Web App and Automated App types are confidential clients and receive a Client Secret; Native and SPA are public (PKCE only).",
+      "status": "source",
+      "sources": [
+        1,
+        2
+      ]
+    },
+    {
+      "claim": "Since Feb 2026 only Public Utility Apps keep free scaled access; legacy Free users moved to pay-per-use with a one-time voucher.",
+      "status": "uncertain",
+      "sources": [
+        4
+      ]
+    },
+    {
+      "claim": "Legacy Basic plans migrate to pay-per-use after 1 Jun 2026.",
+      "status": "uncertain",
+      "sources": [
+        5
+      ]
+    },
+    {
+      "claim": "Twitter has no Composio-managed OAuth app.",
+      "status": "source",
+      "sources": [
+        6
+      ]
+    },
+    {
+      "claim": "Composio's Twitter guide asks for Client ID, Client Secret and Bearer token and gives callback https://backend.composio.dev/api/v1/auth-apps/add.",
+      "status": "source",
+      "sources": [
+        7
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Composio callback URL differs across its docs (v1 auth-apps/add in the Twitter guide, v3 toolkits/auth/callback elsewhere, v3.1 reported in other pages); copy it from the dashboard.",
+    "Are OAuth token/authorization endpoints themselves free under pay-per-use? Forum replies say yes; not on an official page I could fetch.",
+    "The devcommunity.x.com announcements returned 403 to automated fetches; the voucher amount ($10 vs $20 in press) and the Pro migration date are unconfirmed.",
+    "Whether X still performs any use-case review for some apps or permission levels (e.g. DMs) is not documented."
+  ],
+  "lastChecked": "2026-10-28"
+}

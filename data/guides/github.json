@@ -1,0 +1,262 @@
+{
+  "slug": "github",
+  "app": "GitHub",
+  "website": "https://github.com",
+  "developerConsole": "https://github.com/settings/developers",
+  "composio": {
+    "toolkit": "github",
+    "managedApp": "available",
+    "note": "Composio lists GitHub under 'Composio-managed OAuth available'. Use your own OAuth App for your own name on the authorization page, your own rate-limit budget per app, or so customer orgs approve your app rather than Composio's. Composio's GitHub guide uses an OAuth App (not a GitHub App). Copy the callback URL from the Composio auth-config screen."
+  },
+  "summary": "The easiest of the three: register an OAuth App in GitHub settings in a few minutes with no review, no verification and no fees. The main production friction is organizations with OAuth app access restrictions (on by default for new orgs), where an owner must approve your app before it can see org resources.",
+  "difficulty": "easy",
+  "difficultyReason": "Self-serve form with name, homepage URL and callback URL. No provider review. Org-level approval is the only gate and it is per customer org.",
+  "time": {
+    "activeWork": "10-15 minutes",
+    "approvalWait": "None from GitHub",
+    "toProduction": "Same day",
+    "notes": "Hands-on: 10-15 min (inferred). Approval: none from GitHub; per-org owner approval when restrictions are on (minutes to days, inferred). To production: Same day for personal repos; depends on each org owner's approval for org resources."
+  },
+  "review": {
+    "level": "none",
+    "details": "GitHub does not review OAuth Apps. Organizations can enforce OAuth app access restrictions; new organizations have them enabled by default, so members must request approval and an owner approves or denies. GitHub Marketplace listing (optional) has its own review but is not needed for OAuth."
+  },
+  "limitsBeforeApproval": "Works immediately for any GitHub user on their own resources. In orgs with OAuth app access restrictions, unapproved apps cannot access private org resources via API and get no webhook deliveries from private org repos until an owner approves.",
+  "prerequisites": [
+    {
+      "item": "GitHub user account, or an organization if the app should be org-owned",
+      "why": "OAuth Apps are owned by a user or organization (max 100 per owner). Org ownership survives staff changes.",
+      "blocking": true
+    },
+    {
+      "item": "Homepage URL",
+      "why": "Required full URL shown to users.",
+      "blocking": true
+    },
+    {
+      "item": "Privacy policy / ToS",
+      "why": "Not required by GitHub for OAuth Apps.",
+      "blocking": false
+    }
+  ],
+  "steps": [
+    {
+      "title": "Choose OAuth App vs GitHub App",
+      "detail": "Composio's GitHub OAuth2 flow uses an OAuth App. GitHub generally prefers GitHub Apps (fine-grained permissions, short-lived tokens, scaling rate limits) but OAuth Apps use broad scopes like repo. Pick the OAuth App to match Composio's auth scheme.",
+      "owner": "agent",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/differences-between-github-apps-and-oauth-apps"
+    },
+    {
+      "title": "Pick minimal scopes",
+      "detail": "Map agent actions to OAuth scopes (e.g. public_repo vs repo, read:org, workflow). Broad repo grants full private-repo access, which makes org owners hesitate.",
+      "owner": "agent",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps"
+    },
+    {
+      "title": "Register the OAuth App",
+      "detail": "Settings > Developer settings > OAuth Apps > New OAuth App (or the org's Settings > Developer settings). Enter name, homepage URL, optional description, and the callback URL copied from Composio.",
+      "owner": "developer",
+      "url": "https://github.com/settings/applications/new"
+    },
+    {
+      "title": "Decide on expiring user tokens",
+      "detail": "'Expire user access tokens' is enabled by default: access tokens last 8 hours, refresh tokens 6 months. Keep it on if Composio refreshes tokens for this toolkit; disable only if the integration cannot handle refresh.",
+      "owner": "developer",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+    },
+    {
+      "title": "Generate a client secret",
+      "detail": "On the app page, Generate a new client secret and copy it immediately.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "title": "Create the Composio auth config",
+      "detail": "Composio dashboard > Create Auth Config > GitHub > OAuth2 > own credentials. Paste client ID, secret and scopes; confirm callback URL matches.",
+      "owner": "developer",
+      "url": "https://platform.composio.dev"
+    },
+    {
+      "title": "Test against a personal repo and a restricted org",
+      "detail": "Connect a test account, call a repo tool, then try an org with access restrictions to see the approval request flow.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "title": "Write org-approval instructions",
+      "detail": "Draft a note for customer org owners: app name, scopes and why, and where to approve (Org settings > Third-party access > OAuth app policy).",
+      "owner": "agent",
+      "url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data/about-oauth-app-access-restrictions"
+    }
+  ],
+  "nuances": [
+    {
+      "title": "Org access restrictions on by default",
+      "detail": "New orgs enable OAuth app access restrictions by default; users can authorize your app but it cannot reach private org data until an owner approves.",
+      "severity": "warning"
+    },
+    {
+      "title": "Up to 10 callback URLs",
+      "detail": "OAuth Apps now accept up to 10 callback URLs; older docs and memory say only one.",
+      "severity": "info"
+    },
+    {
+      "title": "Wildcard callback matching",
+      "detail": "Exact match is the default. Apps with a single callback URL created before August 3, 2026 have wildcard (subdomain/subdirectory) matching turned on; GitHub recommends disabling it.",
+      "severity": "info"
+    },
+    {
+      "title": "Rate limits shared with the user",
+      "detail": "OAuth App user tokens get 5,000 requests/hour per user (15,000 for Enterprise Cloud orgs that own or approved the app), shared with the user's PATs and other apps.",
+      "severity": "info"
+    },
+    {
+      "title": "10 tokens per user/app/scope",
+      "detail": "Issuing more than 10 tokens for the same user, app and scope revokes older ones; repeated reconnects can invalidate live Composio connections.",
+      "severity": "info"
+    },
+    {
+      "title": "Broad scopes",
+      "detail": "OAuth Apps cannot use fine-grained permissions; repo grants access to all of a user's private repos.",
+      "severity": "warning"
+    }
+  ],
+  "blockers": [
+    {
+      "problem": "Agent cannot see org repos after the user connected",
+      "whatToDo": "Org owner approves the app under the org's third-party access policy, or the member requests approval from the authorization page."
+    },
+    {
+      "problem": "redirect_uri mismatch",
+      "whatToDo": "Add the exact Composio callback URL as one of the app's callback URLs."
+    },
+    {
+      "problem": "Need fine-grained or enterprise-level permissions",
+      "whatToDo": "OAuth Apps cannot do fine-grained; GitHub Apps cannot get enterprise permissions. Check which Composio auth scheme supports what you need."
+    }
+  ],
+  "agentCanDo": [
+    "Recommend OAuth App vs GitHub App for the use case",
+    "Map agent features to minimal OAuth scopes",
+    "Draft the app description and homepage copy",
+    "Write the org-owner approval guide",
+    "Verify the callback URL matches Composio's value",
+    "Estimate rate-limit headroom for expected agent traffic"
+  ],
+  "developerMustDo": [
+    "Own the GitHub account or organization and register the app",
+    "Generate and store the client secret",
+    "Paste credentials into Composio",
+    "Ask customer org owners to approve the app where restrictions apply"
+  ],
+  "redirectUri": "Up to 10 callback URLs per OAuth App. Default is exact match; per-callback wildcard matching allows subdomains and subdirectories of the callback path (host and port must still match). For loopback callbacks (127.0.0.1 or ::1) the port may differ. If redirect_uri is omitted GitHub uses the first callback URL. GitHub docs do not state an https requirement for non-loopback URLs; use https.",
+  "sources": [
+    {
+      "title": "Creating an OAuth app",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
+    },
+    {
+      "title": "Authorizing OAuth apps",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+    },
+    {
+      "title": "Differences between GitHub Apps and OAuth apps",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/differences-between-github-apps-and-oauth-apps"
+    },
+    {
+      "title": "About OAuth app access restrictions",
+      "url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data/about-oauth-app-access-restrictions"
+    },
+    {
+      "title": "Rate limits for the REST API",
+      "url": "https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api"
+    },
+    {
+      "title": "Composio: Managed auth toolkits",
+      "url": "https://docs.composio.dev/toolkits/managed-auth"
+    },
+    {
+      "title": "Composio: GitHub auth guide",
+      "url": "https://composio.dev/auth/github"
+    },
+    {
+      "title": "Composio: Custom auth configs",
+      "url": "https://docs.composio.dev/docs/custom-auth-configs"
+    }
+  ],
+  "claims": [
+    {
+      "claim": "A user or organization can own up to 100 OAuth apps, each with up to 10 callback URLs.",
+      "status": "source",
+      "sources": [
+        0
+      ]
+    },
+    {
+      "claim": "'Expire user access tokens' is enabled by default; access tokens last 8 hours and refresh tokens 6 months.",
+      "status": "source",
+      "sources": [
+        0,
+        1
+      ]
+    },
+    {
+      "claim": "Redirect URLs must exactly match a callback URL unless wildcard matching is enabled for it; single-callback apps created before Aug 3, 2026 have wildcard matching on.",
+      "status": "source",
+      "sources": [
+        1
+      ]
+    },
+    {
+      "claim": "OAuth app access restrictions are enabled by default for new organizations; owners approve member requests.",
+      "status": "source",
+      "sources": [
+        3
+      ]
+    },
+    {
+      "claim": "OAuth App user tokens get 5,000 requests/hour per user, 15,000 for Enterprise Cloud orgs, shared with the user's other tokens.",
+      "status": "source",
+      "sources": [
+        2,
+        4
+      ]
+    },
+    {
+      "claim": "GitHub states GitHub Apps are generally preferred over OAuth apps.",
+      "status": "source",
+      "sources": [
+        2
+      ]
+    },
+    {
+      "claim": "GitHub does not review or verify OAuth Apps before use.",
+      "status": "inferred",
+      "sources": [
+        0
+      ]
+    },
+    {
+      "claim": "Composio offers a managed GitHub OAuth app, and its GitHub guide uses an OAuth App.",
+      "status": "source",
+      "sources": [
+        5,
+        6
+      ]
+    },
+    {
+      "claim": "Hands-on setup takes about 10-15 minutes.",
+      "status": "inferred",
+      "sources": [
+        0
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Composio docs show differing callback URLs (composio.dev/auth/github: https://backend.composio.dev/api/v3/toolkits/auth/callback with older screenshots showing .../api/v1/auth-apps/add; programmatic docs: .../api/v3.1/toolkits/auth/callback). Copy from the dashboard.",
+    "Whether Composio's GitHub toolkit handles GitHub's expiring user tokens with refresh was not confirmed.",
+    "Whether Composio supports a GitHub App auth scheme for this toolkit was not checked.",
+    "GitHub docs fetched do not state whether plain http callback URLs are accepted for non-loopback hosts."
+  ],
+  "lastChecked": "2026-10-28"
+}

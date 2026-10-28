@@ -1,0 +1,323 @@
+{
+  "slug": "zoom",
+  "app": "Zoom",
+  "website": "https://zoom.us",
+  "developerConsole": "https://marketplace.zoom.us/develop/create",
+  "composio": {
+    "toolkit": "zoom",
+    "managedApp": "available",
+    "note": "Composio lists Zoom under 'Composio-managed OAuth available' (OAuth2). Tool descriptions name granular scopes such as meeting:read or meeting:write / meeting:write:admin. ZOOM_CHAT (Zoom Team Chat) is a separate, bring-your-own-app toolkit. Because Zoom tightly limits who can authorize an unpublished app, the managed app is the practical choice unless you can carry a Marketplace review."
+  },
+  "summary": "Creating a General app on the Zoom App Marketplace and connecting your own account takes well under an hour, and private apps need no review. The hard part is letting users outside your Zoom account connect: beta sharing needs Zoom approval plus security evidence (SSDLC, SAST and DAST results, privacy policy, three security policies) and is capped in time and installs, and unrestricted use requires publishing the app (listed or unlisted) through Zoom's full functional and security review.",
+  "difficulty": "hard",
+  "difficultyReason": "Easy for your own account only. For other accounts you must either clear a beta-sharing approval that requires formal security artifacts and caps installs at 10 (account-level) or 100 (user-level), or pass a multi-stage Marketplace review (completeness, branding, functionality, compliance, OWASP-based security testing). Each scope added is itself a request reviewed by Zoom's security team.",
+  "time": {
+    "activeWork": "20-40 min; days for security docs",
+    "approvalWait": "Beta 3-4 business days; publication undocumented",
+    "toProduction": "Same day internal; 1-6 weeks external",
+    "notes": "Private apps used only within your Zoom account need no review. Other accounts need an approved beta URL (Zoom responds in 3-4 business days, requires SSDLC/SAST/DAST evidence, capped installs) or full Marketplace publication; forum-reported staff figures of a 72-hour SLA per stage and up to 2 weeks for security review are uncertain, and the 1-6 week total is inferred."
+  },
+  "review": {
+    "level": "provider_review",
+    "details": "Private apps (only users in the developer's Zoom account) and beta apps are not reviewed for publication, but sharing a beta app outside your account needs Zoom approval of security evidence, lasts 4 weeks with up to two 4-week extensions, and caps total additions at 10 (account-level) or 100 (user-level). Public and unlisted apps go through the Marketplace review: submission completeness and branding, functionality/usability/compliance, then security review (technical design, minimum-scope check, OWASP Top 10 testing). Failed apps get a remediation report and can resubmit."
+  },
+  "limitsBeforeApproval": "Before publication, only users in the developer's own Zoom account can authorize the app (development credentials for local testing; production credentials via Beta Test > Add App). External users need an approved beta authorization URL: valid 4 weeks, max two extensions, max 10 additions for account-level or 100 for user-level apps, no public promotion of the app. Users who already added the app keep access after the URL expires. Apps must be published or unlisted to join meetings hosted by other accounts.",
+  "prerequisites": [
+    {
+      "item": "Zoom account with developer permissions",
+      "why": "The Develop menu on marketplace.zoom.us appears only if your account role has developer permission; account admins may need to grant it.",
+      "blocking": true
+    },
+    {
+      "item": "Decision: user-managed vs admin-managed app",
+      "why": "Determines which scopes and features are available; user-managed apps act on one user's data, admin-managed apps are added by an account admin for the whole account.",
+      "blocking": true
+    },
+    {
+      "item": "HTTPS redirect domain you control (FQDN)",
+      "why": "Zoom's security requirements say to use HTTPS, fully-qualified domains, no localhost, no ngrok unless you prove ownership, and no default Heroku domains. The Composio callback satisfies this.",
+      "blocking": false
+    },
+    {
+      "item": "Privacy policy and security artifacts (for external users)",
+      "why": "Beta sharing approval requires SSDLC documentation, SAST and DAST scan output, privacy policy, any three of five security policies, and TLS 1.2+.",
+      "blocking": false
+    },
+    {
+      "item": "Listing metadata: name, descriptions, images, test plan",
+      "why": "Required for publication, including unlisted apps; missing metadata fails review.",
+      "blocking": false
+    }
+  ],
+  "steps": [
+    {
+      "title": "Decide distribution: private, beta, unlisted or public",
+      "detail": "If only your own Zoom account will connect, a private app is enough and needs no review. If customers on other Zoom accounts will connect, plan for unlisted/public publication (or the Composio-managed app). Beta sharing is a time-boxed test path, not production.",
+      "owner": "agent",
+      "url": "https://developers.zoom.us/docs/platform/key-concepts/"
+    },
+    {
+      "title": "Create a General app",
+      "detail": "On marketplace.zoom.us, Develop > Build an app > General app > Create. Choose user-managed (typical for per-user agent actions) or admin-managed.",
+      "owner": "developer",
+      "url": "https://marketplace.zoom.us/develop/create"
+    },
+    {
+      "title": "Set OAuth redirect URL and allow list",
+      "detail": "Copy the redirect URI from the Composio dashboard (new Zoom auth config with your own credentials) into 'OAuth Redirect URL', and add the same URL or its base domain to the OAuth allow list. Development and production tabs have their own credentials; use the matching pair in Composio.",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/docs/integrations/create/"
+    },
+    {
+      "title": "Select minimal scopes with justifications",
+      "detail": "Map the Composio Zoom tools you need (e.g. meeting:read, meeting:write) to granular scopes and write a one-line justification for each. Zoom treats adding a scope as a request to its Security Review team and may reject unnecessary ones.",
+      "owner": "agent",
+      "url": "https://developers.zoom.us/docs/integrations/create/"
+    },
+    {
+      "title": "Create the Composio auth config and test in your account",
+      "detail": "Paste client ID and secret into Composio, connect your own Zoom user, and call a read tool. Verify token refresh works (access tokens expire after one hour).",
+      "owner": "developer",
+      "url": "https://docs.composio.dev/docs/auth-configuration/custom-auth-configs"
+    },
+    {
+      "title": "Complete Technical Design and listing info",
+      "detail": "Fill in the build flow's Technical Design section (stack, architecture, data handling, security controls) and listing metadata. An agent can draft answers, descriptions, a test plan and privacy policy; the developer must attest and upload real evidence.",
+      "owner": "agent",
+      "url": "https://developers.zoom.us/docs/distribute/security-requirements/"
+    },
+    {
+      "title": "(Optional) Request beta sharing",
+      "detail": "Production tab > Beta Test > Share App > Request to Share. Requires SSDLC docs, SAST/DAST output (screenshots or scanner output, not summaries), privacy policy, three of five security policies, TLS 1.2+.",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/docs/distribute/sharing-private-and-beta-apps/"
+    },
+    {
+      "title": "Zoom reviews the beta request",
+      "detail": "Zoom app review team responds within 3-4 business days; approved URLs last 4 weeks with up to two extensions.",
+      "owner": "provider",
+      "url": "https://developers.zoom.us/docs/distribute/sharing-private-and-beta-apps/"
+    },
+    {
+      "title": "Submit for publication (public or unlisted)",
+      "detail": "Submit the app with production redirect URL, allow list, scopes, technical design, and listing metadata. Unlisted apps still need images, descriptions and categories.",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/docs/distribute/app-review-process/"
+    },
+    {
+      "title": "Zoom Marketplace review and remediation",
+      "detail": "Zoom checks completeness and branding, tests functionality, usability and compliance, then runs security review (minimum scopes, OWASP Top 10, vulnerable libraries). Failures come with a remediation report; fix and resubmit.",
+      "owner": "provider",
+      "url": "https://developers.zoom.us/docs/distribute/app-review-process/"
+    }
+  ],
+  "nuances": [
+    {
+      "title": "Unpublished apps are locked to your account",
+      "detail": "Private apps can only be shared with members of your Zoom account. Customers on other Zoom accounts cannot connect a Composio auth config using your app until it is published/unlisted or an approved beta URL is shared.",
+      "severity": "blocker"
+    },
+    {
+      "title": "Beta sharing now requires security evidence",
+      "detail": "Authorization URL approval requires SSDLC docs, SAST and DAST results, a privacy policy and three of five security policies. Custom-written scan summaries are not accepted. This may be more than older guides describe.",
+      "severity": "warning"
+    },
+    {
+      "title": "Beta caps",
+      "detail": "Approved beta URLs last 4 weeks with up to two 4-week extensions; maximum 10 additions for account-level and 100 for user-level apps. Existing users keep access after expiry.",
+      "severity": "warning"
+    },
+    {
+      "title": "Scope changes force re-authorization",
+      "detail": "If you update scopes or webhook settings, Zoom prompts users to authorize again. Settle scopes before onboarding users.",
+      "severity": "warning"
+    },
+    {
+      "title": "Development vs production credentials",
+      "detail": "Development credentials are for building and testing; production credentials are for the published app. Using a dev client ID with a prod redirect (or vice versa) breaks the flow.",
+      "severity": "info"
+    },
+    {
+      "title": "Allow list URL hygiene is reviewed",
+      "detail": "Review expects HTTPS, FQDNs, no localhost, no ngrok without proof of ownership, no default Heroku domains, and allow-list entries that match the redirect URL. Using your own domain as a redirect proxy (Composio white-labeling) keeps the consent flow on your brand.",
+      "severity": "info"
+    }
+  ],
+  "blockers": [
+    {
+      "problem": "No Develop menu on marketplace.zoom.us.",
+      "whatToDo": "Ask your Zoom account admin to grant your role developer permissions, or use a separate Zoom account you own."
+    },
+    {
+      "problem": "Customers outside your Zoom account cannot authorize the app.",
+      "whatToDo": "Use the Composio-managed Zoom app, request beta sharing (time- and install-capped), or publish as an unlisted app through Marketplace review."
+    },
+    {
+      "problem": "Beta share request rejected or stalled for missing security docs.",
+      "whatToDo": "Upload genuine SAST/DAST scanner output, SSDLC docs, privacy policy and three security policies; contact integration.testers@zoom.us with questions."
+    },
+    {
+      "problem": "Scope request rejected as unnecessary.",
+      "whatToDo": "Remove it or add a concrete justification tied to a feature; prefer granular read scopes over admin scopes."
+    },
+    {
+      "problem": "Marketplace review fails.",
+      "whatToDo": "Work through the remediation report (common causes: incomplete metadata, unclear scopes, missing test plan, security findings) and resubmit."
+    }
+  ],
+  "agentCanDo": [
+    "Recommend distribution type and user- vs admin-managed based on intended users",
+    "Map Composio Zoom tools to minimal granular scopes and write scope justifications",
+    "Draft Technical Design answers, test plan, listing copy and privacy policy text",
+    "Check redirect URL and allow list match the Composio dashboard value and meet HTTPS/FQDN rules",
+    "Run a test connection in the developer's own account and verify token refresh",
+    "Run open-source SAST/DAST tools against the developer's own app if given access (results must be attested by the developer)"
+  ],
+  "developerMustDo": [
+    "Own a Zoom account with developer permissions and accept the Marketplace Developer Agreement",
+    "Choose user-managed vs admin-managed (affects available scopes)",
+    "Supply and attest genuine security documentation and scan results",
+    "Submit beta-sharing and publication requests and respond to reviewer feedback",
+    "Keep client secrets in Composio only"
+  ],
+  "redirectUri": "Set 'OAuth Redirect URL' in the app's build flow and add the URL (full callback or base URL without path/query) to the required OAuth allow list. Zoom's security requirements: HTTPS for all URLs, fully-qualified domain names, no localhost, no ngrok domains unless you prove ownership, avoid default Heroku domains, and only allow-list URLs that match the redirect URL. Custom URL schemes are supported only for Meeting SDK apps. The redirect_uri sent in the token request must match the app's OAuth Redirect URL. For Composio, copy the redirect URI shown in the dashboard (current docs show https://backend.composio.dev/api/v3/toolkits/auth/callback).",
+  "sources": [
+    {
+      "title": "Zoom: Create a General app",
+      "url": "https://developers.zoom.us/docs/integrations/create/"
+    },
+    {
+      "title": "Zoom: Key concepts (private, beta, published, unlisted)",
+      "url": "https://developers.zoom.us/docs/platform/key-concepts/"
+    },
+    {
+      "title": "Zoom: Sharing private and beta apps",
+      "url": "https://developers.zoom.us/docs/distribute/sharing-private-and-beta-apps/"
+    },
+    {
+      "title": "Zoom: App review process",
+      "url": "https://developers.zoom.us/docs/distribute/app-review-process/"
+    },
+    {
+      "title": "Zoom: Security requirements for Marketplace apps",
+      "url": "https://developers.zoom.us/docs/distribute/security-requirements/"
+    },
+    {
+      "title": "Zoom: OAuth 2.0",
+      "url": "https://developers.zoom.us/docs/integrations/oauth/"
+    },
+    {
+      "title": "Zoom Developer Forum: App review process (staff replies on timelines)",
+      "url": "https://devforum.zoom.us/t/zoom-app-marketplace-review-process/121554"
+    },
+    {
+      "title": "Composio managed auth toolkit list",
+      "url": "https://docs.composio.dev/toolkits/managed-auth"
+    },
+    {
+      "title": "Composio Zoom toolkit",
+      "url": "https://docs.composio.dev/toolkits/zoom"
+    },
+    {
+      "title": "Composio custom auth configs",
+      "url": "https://docs.composio.dev/docs/auth-configuration/custom-auth-configs"
+    },
+    {
+      "title": "Zoom: Beta Test build-flow section",
+      "url": "https://developers.zoom.us/docs/build-flow/beta-test/"
+    }
+  ],
+  "claims": [
+    {
+      "claim": "General apps are created on marketplace.zoom.us via Develop > Build an app > General app, and are either admin-managed or user-managed.",
+      "status": "source",
+      "sources": [
+        0,
+        1
+      ]
+    },
+    {
+      "claim": "Private apps are restricted to users in the developer's Zoom account and do not require app review.",
+      "status": "source",
+      "sources": [
+        1,
+        3
+      ]
+    },
+    {
+      "claim": "Sharing a beta app outside your account requires Zoom approval; Zoom responds within 3-4 business days.",
+      "status": "source",
+      "sources": [
+        2
+      ]
+    },
+    {
+      "claim": "Beta authorization URL approval requires SSDLC docs, SAST and DAST results, a privacy policy, three of five security policies and TLS 1.2+.",
+      "status": "source",
+      "sources": [
+        2,
+        4
+      ]
+    },
+    {
+      "claim": "Approved beta URLs last 4 weeks with up to two 4-week extensions; max 10 additions for account-level and 100 for user-level apps.",
+      "status": "source",
+      "sources": [
+        2,
+        10
+      ]
+    },
+    {
+      "claim": "Public and unlisted apps undergo review covering completeness, branding, functionality, usability, compliance and security (OWASP Top 10, minimum scopes).",
+      "status": "source",
+      "sources": [
+        3,
+        1
+      ]
+    },
+    {
+      "claim": "Adding a scope submits a request to the Zoom Security Review team, which may reject unnecessary scopes.",
+      "status": "source",
+      "sources": [
+        0
+      ]
+    },
+    {
+      "claim": "Redirect and allow-list URLs should be HTTPS FQDNs, not localhost, not ngrok without proof of ownership, not default Heroku domains.",
+      "status": "source",
+      "sources": [
+        4
+      ]
+    },
+    {
+      "claim": "OAuth access tokens expire after one hour and are renewed via the refresh flow.",
+      "status": "source",
+      "sources": [
+        5
+      ]
+    },
+    {
+      "claim": "Marketplace review stages have a 72-hour SLA and security review can take up to 2 weeks.",
+      "status": "uncertain",
+      "sources": [
+        6
+      ]
+    },
+    {
+      "claim": "Realistic time to an approved unlisted/public app is 1-6 weeks depending on remediation rounds.",
+      "status": "inferred",
+      "sources": [
+        3,
+        6
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Composio docs show different redirect URIs for custom apps: https://backend.composio.dev/api/v3/toolkits/auth/callback (custom auth configs page), https://backend.composio.dev/api/v3/toolkits/callback (v3 docs), https://backend.composio.dev/api/v3.1/toolkits/auth/callback (preview docs) and a legacy https://backend.composio.dev/api/v1/auth-apps/add. Developers should copy the value from the dashboard.",
+    "Zoom does not publish an official Marketplace review duration; the 72-hour SLA and 2-week security-review figures come from staff replies on the developer forum.",
+    "Whether the HTTPS/no-localhost rules are enforced for development credentials or only checked at submission is not stated.",
+    "Which scopes the Composio-managed Zoom app holds, and whether it is user- or admin-managed, is not documented.",
+    "Exact console URL may redirect; marketplace.zoom.us > Develop > Build an app is the documented path."
+  ],
+  "lastChecked": "2026-10-28"
+}

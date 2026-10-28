@@ -1,0 +1,303 @@
+{
+  "slug": "outlook",
+  "app": "Outlook / Microsoft Graph (Microsoft)",
+  "website": "https://outlook.office.com",
+  "developerConsole": "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
+  "composio": {
+    "toolkit": "outlook",
+    "managedApp": "available",
+    "note": "Composio lists Outlook under 'Composio-managed OAuth available'. Bring your own app registration for your own name and verified badge on the consent prompt, extra Graph permissions, or to let customer tenant admins grant consent to an app they recognise. Composio's Outlook guide suggests 'Accounts in any organizational directory and personal Microsoft accounts' and Mail.Read, Mail.Send, offline_access plus openid profile email. Copy the redirect URI from the Composio auth-config screen."
+  },
+  "summary": "Registering the app is fast and free, and there is no Microsoft app review for Graph mail permissions. The real friction is in customer tenants: unverified multitenant apps show an unverified-publisher warning, many tenants restrict user consent to verified publishers or disable it, and then an admin must consent. Publisher verification removes most of that but requires a verified Microsoft AI Cloud Partner Program account.",
+  "difficulty": "moderate",
+  "difficultyReason": "Registration is self-serve in minutes. Publisher verification needs a Partner Center (CPP) account with completed business verification, a DNS-verified domain matching the publisher domain, and specific admin roles, which is paperwork rather than review. Tenant consent policies are outside your control.",
+  "time": {
+    "activeWork": "20-40 minutes",
+    "approvalWait": "None; verification minutes",
+    "toProduction": "Same day to weeks",
+    "notes": "Hands-on: 20-40 min to register, add redirect URI, permissions and secret (inferred); 1-2 hours more for publisher verification if CPP prerequisites exist (inferred). Approval: None for registration. Publisher verification takes minutes once CPP prerequisites are met (source); CPP account verification itself can take days (inferred). To production: Same day for personal accounts and permissive tenants; days to weeks (inferred) for enterprise tenants that require publisher verification or admin consent."
+  },
+  "review": {
+    "level": "self_serve",
+    "details": "No Microsoft review of the app or its Graph permissions. Publisher verification is self-serve: link a verified Microsoft AI Cloud Partner Program Partner One ID (the partner global account, not a location ID) to the app registration. It is free and needs no license. Separate optional programs (Microsoft 365 Publisher Attestation, App Certification) exist but are not required for OAuth."
+  },
+  "limitsBeforeApproval": "Unverified multitenant apps registered after Nov 8, 2020 that request more than basic sign-in and profile cannot get user consent in other tenants where risk-based step-up consent is enabled; users see an unverified-publisher warning. Tenants using the 'verified publishers, selected permissions' policy also block user consent, routing users to an admin or the admin consent workflow. Personal Microsoft accounts are unaffected.",
+  "prerequisites": [
+    {
+      "item": "Microsoft Entra tenant and an account with at least Application Developer role",
+      "why": "Required to create app registrations. A free Azure account works.",
+      "blocking": true
+    },
+    {
+      "item": "Work or school (Entra) account, not a personal Microsoft account, as registrant",
+      "why": "Apps registered with a personal Microsoft account cannot be publisher verified.",
+      "blocking": false
+    },
+    {
+      "item": "Microsoft AI Cloud Partner Program account (partner global account) that has passed verification",
+      "why": "Required for publisher verification and the blue verified badge.",
+      "blocking": false
+    },
+    {
+      "item": "DNS-verified custom domain set as the app's publisher domain (not *.onmicrosoft.com)",
+      "why": "Must match the domain of the email used in CPP verification.",
+      "blocking": false
+    },
+    {
+      "item": "Application Administrator or Cloud Application Administrator in Entra, plus CPP Partner Admin or Account Admin in Partner Center, signed in with MFA",
+      "why": "The person who initiates publisher verification needs both role sets.",
+      "blocking": false
+    }
+  ],
+  "steps": [
+    {
+      "title": "Choose supported account types",
+      "detail": "For a multi-customer agent pick 'Multiple Entra ID tenants', or 'Any Entra ID Tenant + Personal Microsoft accounts' to include Outlook.com users (Composio's guide uses the latter). Note this choice changes redirect URI rules (no query params, no wildcards, max 100 URIs with personal accounts).",
+      "owner": "agent",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app"
+    },
+    {
+      "title": "Register the app",
+      "detail": "Entra admin center > Entra ID > App registrations > New registration. Enter name and account type, register, and record the Application (client) ID.",
+      "owner": "developer",
+      "url": "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+    },
+    {
+      "title": "Add the Composio redirect URI",
+      "detail": "Authentication > Add a platform > Web. Paste the redirect URI copied from the Composio auth-config screen.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "title": "Add delegated Microsoft Graph permissions",
+      "detail": "API permissions > Add > Microsoft Graph > Delegated: offline_access, openid, profile, email, User.Read, and the narrowest mail permissions needed (Mail.Read, Mail.ReadWrite, Mail.Send). Avoid application permissions unless you need daemon access; those always require admin consent.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "title": "Create a client secret",
+      "detail": "Certificates & secrets > New client secret. Maximum lifetime is 24 months; Microsoft recommends under 12. Copy the value immediately; it is never shown again. Set a reminder to rotate it in Composio before expiry.",
+      "owner": "developer",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials"
+    },
+    {
+      "title": "Create the Composio auth config",
+      "detail": "Composio dashboard > Create Auth Config > Outlook > OAuth2 > own credentials. Paste client ID, secret, scopes; confirm redirect URI matches exactly.",
+      "owner": "developer",
+      "url": "https://platform.composio.dev"
+    },
+    {
+      "title": "Test with a personal account and a second tenant",
+      "detail": "Connect one personal Microsoft account and one work account from another tenant to see the real consent prompt and any unverified-publisher warning.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "title": "Set publisher domain and check publisher-verification readiness",
+      "detail": "Verify the custom domain in the tenant, set it as publisher domain, and confirm the CPP account, roles and email domain line up.",
+      "owner": "agent",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview"
+    },
+    {
+      "title": "Enroll in Microsoft AI Cloud Partner Program",
+      "detail": "Create the Partner Center account and complete business verification if you do not have one. Legal attestations and company details are yours to provide.",
+      "owner": "developer",
+      "url": "https://partner.microsoft.com/membership"
+    },
+    {
+      "title": "Mark the app as publisher verified",
+      "detail": "App registration > Branding & properties > add the Partner One ID and verify. Done in minutes when prerequisites are met.",
+      "owner": "developer",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/mark-app-as-publisher-verified"
+    },
+    {
+      "title": "Prepare admin-consent instructions for customers",
+      "detail": "Draft a short note for customer IT with the admin consent URL (https://login.microsoftonline.com/{tenant}/adminconsent?client_id=...), the permission list and why each is needed.",
+      "owner": "agent",
+      "url": null
+    }
+  ],
+  "nuances": [
+    {
+      "title": "Unverified publisher warning",
+      "detail": "Multitenant apps without publisher verification show a warning, and with risk-based step-up consent enabled users in other tenants cannot consent at all.",
+      "severity": "warning"
+    },
+    {
+      "title": "Customer tenant consent policy decides",
+      "detail": "Tenants can allow user consent for any app, only for verified publishers with low-impact permissions, or disable it. In the restrictive cases an admin must consent or approve via the admin consent workflow.",
+      "severity": "warning"
+    },
+    {
+      "title": "Client secret expires",
+      "detail": "Secrets last at most 24 months. When one expires every Composio connection using it fails until you rotate the secret in the auth config.",
+      "severity": "warning"
+    },
+    {
+      "title": "Personal accounts tighten redirect rules",
+      "detail": "Including personal Microsoft accounts disallows query parameters and wildcards and caps redirect URIs at 100 (256 for org-only).",
+      "severity": "info"
+    },
+    {
+      "title": "Publisher verification is free",
+      "detail": "No charge and no license; the cost is CPP enrollment effort.",
+      "severity": "info"
+    },
+    {
+      "title": "Apps that require user assignment",
+      "detail": "If a customer sets the enterprise app to require assignment, an admin must consent even when user consent is otherwise allowed.",
+      "severity": "info"
+    }
+  ],
+  "blockers": [
+    {
+      "problem": "Users in customer tenants cannot consent ('Need admin approval')",
+      "whatToDo": "Complete publisher verification and give the customer admin the admin consent URL, or ask them to enable the admin consent workflow."
+    },
+    {
+      "problem": "Publisher verification fails on domain mismatch",
+      "whatToDo": "Make the CPP verification email domain match the app's publisher domain or a DNS-verified domain in the tenant; *.onmicrosoft.com is not accepted."
+    },
+    {
+      "problem": "App registered with a personal Microsoft account",
+      "whatToDo": "Re-register under an Entra work or school tenant associated with the CPP partner global account."
+    },
+    {
+      "problem": "AADSTS50011 reply URL mismatch",
+      "whatToDo": "Copy the redirect URI from Composio exactly, including case and path; add it to the Web platform on the application object."
+    }
+  ],
+  "agentCanDo": [
+    "Recommend account type and the minimal delegated Graph permissions for the agent's mail features",
+    "Generate the admin consent URL and a customer-IT explainer",
+    "Check publisher-verification prerequisites (domain match, roles, PGA vs location ID)",
+    "Verify the redirect URI matches Composio's value and Entra's rules",
+    "Track secret expiry and remind before rotation",
+    "With Graph API access, script the app registration and permission setup"
+  ],
+  "developerMustDo": [
+    "Own the Entra tenant and sign in with MFA",
+    "Create the app registration and client secret, and paste the secret into Composio",
+    "Verify the custom domain via DNS",
+    "Enroll and verify the business in Microsoft AI Cloud Partner Program and accept the identity platform Terms of Use",
+    "Ask customer tenant admins to grant consent where required"
+  ],
+  "redirectUri": "Must start with https, except localhost (http allowed; port ignored for matching). Case-sensitive path match; URIs without a path get a trailing slash in responses. Max 256 characters each; max 256 URIs for org-only apps, 100 when personal accounts are included. Wildcards only for org-only apps via the manifest, and discouraged. Query parameters not allowed when personal accounts are supported. No IPv6 loopback, no IDNs, no ! $ ' ( ) , ; characters.",
+  "sources": [
+    {
+      "title": "Register an app in Microsoft Entra ID",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app"
+    },
+    {
+      "title": "Publisher verification overview",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview"
+    },
+    {
+      "title": "Configure how users consent to applications",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent"
+    },
+    {
+      "title": "Redirect URI best practices and limitations",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/reply-url"
+    },
+    {
+      "title": "Add and manage app credentials",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials"
+    },
+    {
+      "title": "Microsoft Graph permissions reference",
+      "url": "https://learn.microsoft.com/en-us/graph/permissions-reference"
+    },
+    {
+      "title": "Composio: Managed auth toolkits",
+      "url": "https://docs.composio.dev/toolkits/managed-auth"
+    },
+    {
+      "title": "Composio: Outlook auth guide",
+      "url": "https://composio.dev/auth/outlook"
+    },
+    {
+      "title": "Composio: Custom auth configs",
+      "url": "https://docs.composio.dev/docs/custom-auth-configs"
+    }
+  ],
+  "claims": [
+    {
+      "claim": "Publisher verification requires a verified Microsoft AI Cloud Partner Program partner global account; location Partner One IDs are not supported.",
+      "status": "source",
+      "sources": [
+        1
+      ]
+    },
+    {
+      "claim": "Publisher verification is free, needs no license, and completes in minutes once prerequisites are met.",
+      "status": "source",
+      "sources": [
+        1
+      ]
+    },
+    {
+      "claim": "Since November 2020, with risk-based step-up consent enabled, users cannot consent to unverified multitenant apps requesting more than basic sign-in and profile.",
+      "status": "source",
+      "sources": [
+        1
+      ]
+    },
+    {
+      "claim": "Apps registered with a personal Microsoft account cannot be publisher verified, and *.onmicrosoft.com cannot be the publisher domain.",
+      "status": "source",
+      "sources": [
+        1
+      ]
+    },
+    {
+      "claim": "Built-in consent policy microsoft-user-default-low allows user consent only for verified publishers or same-tenant apps and only for low-impact permissions.",
+      "status": "source",
+      "sources": [
+        2
+      ]
+    },
+    {
+      "claim": "Redirect URIs must be https except localhost; localhost port is ignored for matching; wildcards unsupported when personal accounts are included.",
+      "status": "source",
+      "sources": [
+        3
+      ]
+    },
+    {
+      "claim": "Client secrets are limited to 24 months; Microsoft recommends under 12 months.",
+      "status": "source",
+      "sources": [
+        4
+      ]
+    },
+    {
+      "claim": "Delegated Mail.Read, Mail.ReadWrite, Mail.Send, User.Read and offline_access do not require admin consent by default.",
+      "status": "inferred",
+      "sources": [
+        5
+      ]
+    },
+    {
+      "claim": "Composio offers a managed Outlook OAuth app.",
+      "status": "source",
+      "sources": [
+        6
+      ]
+    },
+    {
+      "claim": "Enterprise tenants with restricted consent can add days to weeks before users can connect.",
+      "status": "inferred",
+      "sources": [
+        2
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Composio docs show differing redirect URIs (composio.dev/auth/outlook: https://backend.composio.dev/api/v3/toolkits/auth/callback; other pages: .../api/v3.1/toolkits/auth/callback or .../api/v1/auth-apps/add). Copy from the dashboard.",
+    "Admin-consent requirement for Mail.* delegated permissions was not confirmed from the fetched page section (permissions reference too long to read fully); confirm per permission.",
+    "How long Microsoft AI Cloud Partner Program business verification takes is not published on the pages fetched.",
+    "What share of enterprise tenants enable restrictive consent policies is unknown."
+  ],
+  "lastChecked": "2026-10-28"
+}

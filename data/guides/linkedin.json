@@ -1,0 +1,344 @@
+{
+  "slug": "linkedin",
+  "app": "LinkedIn",
+  "website": "https://www.linkedin.com",
+  "developerConsole": "https://www.linkedin.com/developers/apps/new",
+  "composio": {
+    "toolkit": "linkedin",
+    "managedApp": "available",
+    "note": "Composio lists LinkedIn under 'Composio-managed OAuth available'. Its toolkit FAQ says the default app is shared with strict rate limits, recommends your own app for production, and says LinkedIn restricts certain scope combinations, so conflicting scopes need your own app. Organization-page tools (e.g. those needing rw_organization_admin) depend on scopes that only the Community Management API grants. The separate LINKEDIN_ADS toolkit is bring-your-own-app only."
+  },
+  "summary": "Creating the app and enabling the two self-serve products (Sign In with LinkedIn using OpenID Connect, Share on LinkedIn) takes under an hour once a Company Page super admin approves the app association. That only gets you profile, email and posting as the member (w_member_social). Anything touching company pages, analytics or ads needs a vetted product: Community Management API requires a registered legal entity, business-email and organization vetting, a dedicated app with no other products, and a screencast plus test credentials for the production (Standard) tier.",
+  "difficulty": "moderate",
+  "difficultyReason": "Moderate for member-level scopes (self-serve, but blocked on a Company Page super admin). Effectively hard to very hard if you need organization scopes: Community Management API is vetted in two tiers, must be the only product on its app, is limited to registered legal organizations, and a rejection means creating a new app to reapply.",
+  "time": {
+    "activeWork": "20-45 min (inferred)",
+    "approvalWait": "None; vetted products undocumented",
+    "toProduction": "Same day; org scopes: weeks-months",
+    "notes": "Self-serve products (Sign In with LinkedIn, Share on LinkedIn) need no review, only Company Page super-admin approval of the app (30-day window). Community Management API adds two vetted tiers with no published turnaround plus 0.5-2 days of screencast work (inferred); Advertising API Standard tier can take up to 30 business days per LinkedIn."
+  },
+  "review": {
+    "level": "self_serve",
+    "details": "Open permissions (openid/profile/email via Sign In with LinkedIn using OpenID Connect; w_member_social via Share on LinkedIn) are added self-service on the app's Products tab with no human review. The only gate is the Company Page super admin approving the app association. All other products need LinkedIn approval: Community Management API (Development tier, then Standard tier with screencast, test credentials and privacy-policy review), Advertising API, Lead Sync, Conversions, Matched Audiences; Sales (SNAP) and Talent need partner programs; Compliance is closed. Statuses shown during vetting: Access Form Review, Identity Vetting, App Review."
+  },
+  "limitsBeforeApproval": "Before the Page super admin approves the association, the app is not usable for product requests (inferred from third-party guides; LinkedIn's help says only that the association appears in settings once approved). With only self-serve products you get openid, profile, email and w_member_social: no company-page posting, no reading comments/analytics. Community Management Development tier: 500 calls per app per 24h, 100 calls per member per 24h, no BATCH_GET, social-action webhooks disabled, and integration must be finished within 12 months.",
+  "prerequisites": [
+    {
+      "item": "A personal LinkedIn account for the developer",
+      "why": "The Developer Portal is accessed with LinkedIn credentials; apps are owned by members.",
+      "blocking": true
+    },
+    {
+      "item": "A LinkedIn Company Page and access to its super admin",
+      "why": "Every app is associated with a LinkedIn Page; the Page super admin must approve the association, and has 30 days to do so.",
+      "blocking": true
+    },
+    {
+      "item": "Public privacy policy URL",
+      "why": "Requested on the Create app form; Community Management Standard tier is also reviewed for a valid privacy policy ('Invalid Privacy Policy' is a listed denial reason).",
+      "blocking": true
+    },
+    {
+      "item": "Square app logo (local file)",
+      "why": "Shown on the consent screen; uploaded on the Create app form.",
+      "blocking": true
+    },
+    {
+      "item": "Registered legal entity, business email on your domain, and company website (Community Management API only)",
+      "why": "Community Management API is limited to registered legal organizations for commercial use; personal email addresses fail vetting; website and domain are verified.",
+      "blocking": false
+    },
+    {
+      "item": "App name without 'LinkedIn', 'Linked', 'In' or Microsoft names/logos",
+      "why": "'Invalid App Name' is a listed rejection reason for vetted products.",
+      "blocking": false
+    }
+  ],
+  "steps": [
+    {
+      "title": "Decide which LinkedIn product you actually need",
+      "detail": "Map the Composio LinkedIn tools you plan to call to scopes. Posting as a person needs only w_member_social (Share on LinkedIn, self-serve). Posting as or reading a company page, page analytics or comments need Community Management API scopes (w_organization_social, r_organization_social, rw_organization_admin), which require vetting. If member-level scopes suffice, stay on the self-serve path.",
+      "owner": "agent",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+    },
+    {
+      "title": "Prepare app assets",
+      "detail": "Draft a privacy policy page (if you lack one), pick an app name that avoids LinkedIn/Microsoft marks, and produce a square logo. The developer must publish the policy on their own domain.",
+      "owner": "agent",
+      "url": null
+    },
+    {
+      "title": "Create the app in the Developer Portal",
+      "detail": "Sign in, My apps > Create app. Enter app name, select the Company Page, privacy policy URL, upload the logo, accept the API terms, and create.",
+      "owner": "developer",
+      "url": "https://www.linkedin.com/developers/apps/new"
+    },
+    {
+      "title": "Get the Company Page association approved",
+      "detail": "On the app's Settings, click Verify to generate a verification link and send it to the Page super admin, who approves or denies it (30-day window). If you are the super admin, approve it yourself.",
+      "owner": "developer",
+      "url": "https://www.linkedin.com/help/linkedin/answer/a548360/associate-an-app-with-a-linkedin-page?lang=en"
+    },
+    {
+      "title": "Add self-serve products",
+      "detail": "On the Products tab, request 'Sign In with LinkedIn using OpenID Connect' and/or 'Share on LinkedIn'. These are granted without review; the Auth tab then lists the available scopes.",
+      "owner": "developer",
+      "url": "https://www.linkedin.com/developers/apps"
+    },
+    {
+      "title": "Register the Composio redirect URL",
+      "detail": "In Composio, start creating a LinkedIn auth config with your own credentials and copy the redirect URI the dashboard shows. On the LinkedIn app's Auth tab, add it under Authorized redirect URLs exactly as shown (absolute HTTPS URL, no fragment).",
+      "owner": "developer",
+      "url": "https://www.linkedin.com/developers/apps"
+    },
+    {
+      "title": "Create the Composio auth config",
+      "detail": "Paste the Client ID and Client Secret from the Auth tab into the Composio auth config, set scopes to only those your app has been granted (e.g. openid profile email w_member_social). Requesting a scope the app does not hold fails with 'Invalid scope'.",
+      "owner": "developer",
+      "url": "https://docs.composio.dev/docs/auth-configuration/custom-auth-configs"
+    },
+    {
+      "title": "Verify the setup end to end",
+      "detail": "Initiate a connection through Composio, complete consent, then call a read tool. Check for redirect_uri mismatch (401) or invalid scope errors and compare the scopes on the Auth tab with the auth config.",
+      "owner": "agent",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+    },
+    {
+      "title": "(Org scopes only) Create a separate app and apply for Community Management API",
+      "detail": "Community Management API must be the only product on its app; the request button is greyed out if other products are provisioned or pending. Create a new app on the same Company Page, request the product, and complete the vetting survey within 21 days (legal name, registered address, website, privacy policy, business email verification). An agent can draft the use-case text.",
+      "owner": "developer",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review"
+    },
+    {
+      "title": "LinkedIn vets the Development tier request",
+      "detail": "LinkedIn checks use case, business email, organization, website/domain and page verification. A rejected app cannot reapply for Development tier; you must create a new app.",
+      "owner": "provider",
+      "url": "https://www.linkedin.com/help/linkedin/answer/a1449586/"
+    },
+    {
+      "title": "(Org scopes only) Apply for Standard tier",
+      "detail": "After building the integration, submit the Standard tier form under My Apps > Products with a company/product overview, test credentials, and a downloadable high-resolution screencast showing the full OAuth flow and each declared use case. An agent can write the script and checklist; the developer records it.",
+      "owner": "developer",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review"
+    }
+  ],
+  "nuances": [
+    {
+      "title": "Community Management API cannot share an app",
+      "detail": "LinkedIn states it must be the only product associated with a developer app due to legal and security constraints. If your app already has Share on LinkedIn or Sign In, create a second app (and a second Composio auth config) for org features.",
+      "severity": "blocker"
+    },
+    {
+      "title": "Rejection burns the app",
+      "detail": "A rejected Development or Standard tier request cannot be resubmitted from the same app; you must create a new app. The exception is 'Insufficient Details' (survey not completed within 21 days), which enables a Reapply button.",
+      "severity": "warning"
+    },
+    {
+      "title": "Changing scopes invalidates tokens",
+      "detail": "Requesting a different scope than previously granted invalidates all previous access tokens for that member, and users must re-consent. Fix scopes before onboarding users.",
+      "severity": "warning"
+    },
+    {
+      "title": "Refresh tokens are not universal",
+      "detail": "Access tokens last 60 days. LinkedIn says programmatic refresh tokens are available only to a limited set of partners; otherwise you re-run the auth flow (consent is skipped if the member is still logged in and the token has not expired). Expect Composio connections on a self-serve app to need re-auth roughly every 60 days.",
+      "severity": "warning"
+    },
+    {
+      "title": "Consent is all-or-nothing",
+      "detail": "Members must accept all requested scopes together; request the minimum.",
+      "severity": "info"
+    },
+    {
+      "title": "Development tier has a 12-month clock",
+      "detail": "Community Management Development tier access expects you to complete integration and testing within twelve months.",
+      "severity": "info"
+    },
+    {
+      "title": "Marketing API version sunsets",
+      "detail": "LinkedIn Marketing APIs are versioned monthly; version 202511 sunsets on November 16, 2026. Not your OAuth app's problem, but org/ads tools break if the caller pins an old version.",
+      "severity": "info"
+    }
+  ],
+  "blockers": [
+    {
+      "problem": "You are not a super admin of any Company Page.",
+      "whatToDo": "Ask the Page super admin to approve the verification link within 30 days, or create a new Company Page you own and associate the app with it."
+    },
+    {
+      "problem": "Community Management API request button is greyed out.",
+      "whatToDo": "The app already has other products or pending requests. Create a new app on the same Company Page and request only Community Management API there."
+    },
+    {
+      "problem": "Vetting denied: Fail Email Verification / Fail Organization Verification / Invalid Company Website.",
+      "whatToDo": "Use a business email on the company domain, make sure the legal entity is registered and its website/domain matches. File a Vetting Appeal via the developer support form, or fix and apply from a new app."
+    },
+    {
+      "problem": "You are an individual or unregistered project needing org-page scopes.",
+      "whatToDo": "Community Management API is for registered legal organizations only. Use the Composio-managed app if it covers your tools, or restrict to member-level scopes."
+    },
+    {
+      "problem": "Invalid scope error during Composio connect.",
+      "whatToDo": "Remove scopes from the auth config that are not listed on the app's Auth tab; wait for product approval before requesting them."
+    }
+  ],
+  "agentCanDo": [
+    "Map the Composio LinkedIn tools you need to required scopes and the product that grants them",
+    "Draft privacy policy text and a non-infringing app name",
+    "Draft the Community Management API use-case description and vetting-survey answers",
+    "Write the Standard-tier screencast script and checklist per declared use case",
+    "Check the redirect URL on the Auth tab matches the Composio dashboard value character for character (with browser access to the developer's session)",
+    "Run a test connection through Composio and diagnose redirect/scope errors"
+  ],
+  "developerMustDo": [
+    "Sign in to the Developer Portal with their own LinkedIn account and accept the API terms",
+    "Own or get approval from the Company Page super admin",
+    "Publish the privacy policy on the company domain",
+    "Verify the business email and supply legal entity details for vetted products",
+    "Record the screencast and provide test credentials for Standard tier",
+    "Store the Client Secret in Composio and nowhere public"
+  ],
+  "redirectUri": "Configured under the app's Auth tab > Authorized redirect URLs. LinkedIn's docs say to add the callback via HTTPS; URLs must be absolute, query parameters are ignored when matching, and fragments (#) are invalid. The redirect_uri sent at authorization and token exchange must match a registered URL or LinkedIn returns 401 'Redirect_uri doesn't match'. Whether http://localhost is accepted is not stated in the docs. For Composio, copy the redirect URI shown in the Composio dashboard when creating the auth config (current docs show https://backend.composio.dev/api/v3/toolkits/auth/callback; older defaults use a v1 path).",
+  "sources": [
+    {
+      "title": "Getting Access to LinkedIn APIs (Microsoft Learn)",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+    },
+    {
+      "title": "LinkedIn 3-Legged OAuth Flow (Microsoft Learn)",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+    },
+    {
+      "title": "Increasing Access - LinkedIn Marketing (Microsoft Learn)",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/increasing-access"
+    },
+    {
+      "title": "Community Management App Review (Microsoft Learn)",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review"
+    },
+    {
+      "title": "LinkedIn API Partner Support guide (Microsoft Learn)",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/linkedin-api-partner-support-guide"
+    },
+    {
+      "title": "Associate an app with a LinkedIn Page (LinkedIn Help)",
+      "url": "https://www.linkedin.com/help/linkedin/answer/a548360/associate-an-app-with-a-linkedin-page?lang=en"
+    },
+    {
+      "title": "Developer application review status definitions (LinkedIn Help)",
+      "url": "https://www.linkedin.com/help/linkedin/answer/a1449586/"
+    },
+    {
+      "title": "Create a new app for a LinkedIn Page (LinkedIn Help)",
+      "url": "https://www.linkedin.com/help/learning/answer/a1667239"
+    },
+    {
+      "title": "Composio managed auth toolkit list",
+      "url": "https://docs.composio.dev/toolkits/managed-auth"
+    },
+    {
+      "title": "Composio LinkedIn toolkit",
+      "url": "https://docs.composio.dev/toolkits/linkedin"
+    },
+    {
+      "title": "Composio custom auth configs",
+      "url": "https://docs.composio.dev/docs/auth-configuration/custom-auth-configs"
+    },
+    {
+      "title": "LinkedIn Marketing Quick Start (Microsoft Learn)",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/quick-start"
+    }
+  ],
+  "claims": [
+    {
+      "claim": "Sign In with LinkedIn using OpenID Connect (profile, email) and Share on LinkedIn (w_member_social) are open permissions added self-service on the Products tab; most other permissions require explicit LinkedIn approval.",
+      "status": "source",
+      "sources": [
+        0
+      ]
+    },
+    {
+      "claim": "A Company Page super admin must approve the app association and has 30 days to do so.",
+      "status": "source",
+      "sources": [
+        5
+      ]
+    },
+    {
+      "claim": "Community Management API must be the only product on a developer app; the request button is disabled if other products are provisioned or pending.",
+      "status": "source",
+      "sources": [
+        4
+      ]
+    },
+    {
+      "claim": "Community Management API is available only to registered legal organizations for commercial use; business email, organization, website and page verification are checked.",
+      "status": "source",
+      "sources": [
+        3
+      ]
+    },
+    {
+      "claim": "Community Management Development tier allows 500 calls per app and 100 per member per 24h, no BATCH_GET, no social-action webhooks; Standard tier has no restrictions.",
+      "status": "source",
+      "sources": [
+        2
+      ]
+    },
+    {
+      "claim": "Standard tier requires a downloadable screencast of each use case and test credentials; rejected apps cannot reapply and must be recreated.",
+      "status": "source",
+      "sources": [
+        3,
+        11
+      ]
+    },
+    {
+      "claim": "The vetting survey must be submitted within 21 days or the request is marked Insufficient Details.",
+      "status": "source",
+      "sources": [
+        4
+      ]
+    },
+    {
+      "claim": "Advertising API Standard tier review can take up to 30 business days.",
+      "status": "source",
+      "sources": [
+        4
+      ]
+    },
+    {
+      "claim": "Redirect URLs must be absolute, cannot contain '#', ignore query parameters, and must match the registered URL.",
+      "status": "source",
+      "sources": [
+        1
+      ]
+    },
+    {
+      "claim": "Access tokens last 60 days; programmatic refresh tokens are limited to a set of partners.",
+      "status": "source",
+      "sources": [
+        1
+      ]
+    },
+    {
+      "claim": "Community Management Development tier review typically takes days to a few weeks.",
+      "status": "uncertain",
+      "sources": []
+    },
+    {
+      "claim": "Composio's default LinkedIn app is shared with strict rate limits; conflicting scopes require your own app.",
+      "status": "source",
+      "sources": [
+        9
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Composio docs show different redirect URIs for custom apps: https://backend.composio.dev/api/v3/toolkits/auth/callback (custom auth configs page), https://backend.composio.dev/api/v3/toolkits/callback (v3 docs), https://backend.composio.dev/api/v3.1/toolkits/auth/callback (preview docs) and a legacy https://backend.composio.dev/api/v1/auth-apps/add. Developers should copy the value from the dashboard; Composio should reconcile the docs.",
+    "Which scopes the Composio-managed LinkedIn app holds (member-only vs Community Management) is not documented.",
+    "No official turnaround time is published for Community Management Development or Standard tier review.",
+    "Whether LinkedIn accepts http://localhost redirect URLs is not stated in current docs.",
+    "Whether an unverified (page-association pending) app can still add self-serve products was not confirmed in official docs."
+  ],
+  "lastChecked": "2026-10-28"
+}
