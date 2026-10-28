@@ -58,7 +58,7 @@ scripts/validate-guides   checks every curated guide
 1. **Research.** The model uses Anthropic's server-side `web_search` and `web_fetch` tools to investigate the provider, preferring official developer docs and policy pages, and writes notes with a URL behind each fact. Each search and page read streams to the browser so the developer can watch it work.
 2. **Write.** A second call converts the notes into the guide schema with structured outputs. It may only use facts from the notes and must label each claim as sourced, inferred or uncertain. Composio managed-app status comes from the directory snapshot, not the model.
 
-Both calls opt into server-side fallback (`fallbacks: "default"`), so a safety-classifier decline is retried on a fallback model rather than failing the run.
+The research prompt tells the agent to search before fetching (web fetch only opens URLs already seen in the conversation) and to fall back to help centers, changelogs or GitHub when a docs site renders with JavaScript. Both lessons came from test runs on Xero. Both calls opt into server-side fallback (`fallbacks: "default"`), so a safety-classifier decline is retried on a fallback model rather than failing the run.
 
 **Sharing.** Generated guides are not stored on a server. The whole guide is compressed into the URL fragment (`/g#...`), so the link is the guide. Every guide also exports to Markdown.
 
@@ -84,7 +84,7 @@ See [VERIFICATION.md](VERIFICATION.md) for the spot-check log and the findings t
 
 - Provider policies change; guides show the date they were checked.
 - The live agent reads public pages only. It does not log in to provider consoles or create apps.
-- Live generation takes 1 to 3 minutes and spends model tokens on every run. There is no caching or rate limiting yet, so a public deployment should add both.
+- Live generation takes about 2 to 4 minutes (test runs: Xero about 4 min before tuning, Pipedrive 3 min 5 s after) and spends model tokens on every run. There is no caching or rate limiting yet, so a public deployment should add both.
 - Generated guides are not persisted server-side, and very long guides produce long URLs.
 
 ## Next steps I'd take

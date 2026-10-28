@@ -93,7 +93,7 @@ export default function About() {
         <li>Policies change. Each guide shows the date it was checked; re-verify before submitting for review.</li>
         <li>Time estimates are ranges. Where no source states a number, the claim is marked inferred.</li>
         <li>The live agent reads public pages only. It cannot log in to provider consoles, so it does not create apps itself.</li>
-        <li>Live generation takes 1 to 3 minutes and costs model tokens per run; there is no caching or rate limiting yet.</li>
+        <li>Live generation takes about 2 to 4 minutes and costs model tokens per run; there is no caching or rate limiting yet.</li>
         <li>Generated guides are not stored server-side. Very long guides make long URLs.</li>
       </ul>
     </div>

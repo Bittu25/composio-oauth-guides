@@ -90,7 +90,7 @@ export function Generate({ known }: { known: Known[] }) {
       {(running || log.length > 0) && (
         <div className="log" aria-live="polite">
           <div className="log-head">
-            <span className="pulse" /> Agent working on <strong>{app}</strong>. This usually takes 1 to 3 minutes.
+            <span className="pulse" /> Agent working on <strong>{app}</strong>. This usually takes 2 to 4 minutes.
           </div>
           <ul>
             {log.map((ev, i) => (

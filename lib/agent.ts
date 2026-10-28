@@ -20,6 +20,10 @@ const RESEARCH_SYSTEM = `You research how a developer registers their OWN OAuth 
 
 Investigate with web_search and web_fetch. Prefer the provider's official developer docs, policy pages and changelogs over blogs. Fetch the key pages; do not rely on search snippets for important facts.
 
+You have a limited number of searches and fetches, so plan: run a few targeted searches first, then fetch the 4-8 most important official pages. Don't fetch the same URL twice.
+web_fetch can only open URLs that already appeared in this conversation (in search results or fetched pages). Never guess a URL: search for the page first, then fetch the URL from the results.
+Some docs sites render with JavaScript and return almost no text. If a fetch comes back empty or only shows navigation, don't retry it. Try the provider's help center or support articles, its developer blog or changelog, its official GitHub repositories (SDK READMEs, OpenAPI specs, docs sources), or a well-sourced search result instead, and say which kind of source you used.
+
 Find out, specifically:
 1. Where the OAuth app is created (console URL) and account prerequisites: paid plan or tier, developer/partner account, test org or store, verified domain, company page, legal entity, privacy policy / terms / homepage URLs.
 2. The approval regime: none, self-serve verification (domain, publisher, brand), human review by the provider, third-party security assessment, or a partner/paid program. What triggers it (e.g. certain scopes, number of users, public listing).
@@ -52,6 +56,8 @@ function slugify(s: string) {
 export async function* generateGuide(appQuery: string): AsyncGenerator<AgentEvent> {
   const client = new Anthropic();
   const today = new Date().toISOString().slice(0, 10);
+  const t0 = Date.now();
+  const elapsed = () => `${Math.round((Date.now() - t0) / 1000)}s`;
 
   yield { type: "status", message: `Researching ${appQuery}` };
 
@@ -76,8 +82,8 @@ export async function* generateGuide(appQuery: string): AsyncGenerator<AgentEven
       output_config: { effort: "medium" },
       system: RESEARCH_SYSTEM,
       tools: [
-        { type: "web_search_20260209", name: "web_search", max_uses: 6 },
-        { type: "web_fetch_20260209", name: "web_fetch", max_uses: 8 },
+        { type: "web_search_20260209", name: "web_search", max_uses: 8 },
+        { type: "web_fetch_20260209", name: "web_fetch", max_uses: 10 },
       ],
       messages,
     });
@@ -87,6 +93,13 @@ export async function* generateGuide(appQuery: string): AsyncGenerator<AgentEven
         const input = block.input as { query?: string; url?: string };
         if (input.query) pending.push({ type: "search", query: input.query });
         else if (input.url) pending.push({ type: "fetch", url: input.url });
+      } else if (
+        (block.type === "web_search_tool_result" || block.type === "web_fetch_tool_result") &&
+        !Array.isArray(block.content) &&
+        "error_code" in block.content
+      ) {
+        // Server-tool errors arrive as result blocks, not exceptions.
+        pending.push({ type: "note", text: `Tool error: ${String(block.content.error_code)}` });
       } else if (block.type === "text" && block.text.trim()) {
         pending.push({ type: "note", text: block.text.trim().slice(0, 240) });
       }
@@ -125,14 +138,15 @@ export async function* generateGuide(appQuery: string): AsyncGenerator<AgentEven
     return;
   }
 
-  yield { type: "status", message: "Writing the guide" };
+  yield { type: "status", message: `Research done in ${elapsed()}. Writing the guide` };
 
   const response = await client.beta.messages.parse({
     model: MODEL,
     max_tokens: 16000,
     betas: BETAS,
     fallbacks: "default",
-    output_config: { effort: "medium", format: betaZodOutputFormat(GuideSchema) },
+    // Writing is formatting work over notes already gathered, so low effort keeps the run fast.
+    output_config: { effort: "low", format: betaZodOutputFormat(GuideSchema) },
     system: WRITER_SYSTEM,
     messages: [
       {
@@ -153,5 +167,6 @@ export async function* generateGuide(appQuery: string): AsyncGenerator<AgentEven
     guide.composio.managedApp = "available";
   }
 
+  console.log(`guide for ${appQuery} generated in ${elapsed()}`);
   yield { type: "guide", guide };
 }
