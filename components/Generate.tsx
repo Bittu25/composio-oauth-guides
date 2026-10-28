@@ -78,7 +78,8 @@ export function Generate({ known }: { known: Known[] }) {
           }
           if (ev.type === "error") throw new Error(ev.message);
           if (ev.type === "status" && ev.message.includes("Writing")) setPhase("write");
-          setLog((l) => [...l, ev]);
+          // Skip an event identical to the previous one (a repeated query adds nothing to the log).
+          setLog((l) => (l.length && JSON.stringify(l[l.length - 1]) === line ? l : [...l, ev]));
         }
       }
       throw new Error("The connection closed before the guide was ready. Try again.");
